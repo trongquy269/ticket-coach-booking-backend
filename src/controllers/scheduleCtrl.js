@@ -173,6 +173,70 @@ function getMySchedule(req, res) {
 	});
 }
 
+function getFeedback(req, res) {
+	const scheduleId = req.query.scheduleId;
+
+	scheduleModel.getFeedback(scheduleId, (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+function sendFeedback(req, res) {
+	const userId = req.body.userId;
+	const scheduleId = req.body.scheduleId;
+	const rate = req.body.rate;
+	let content = req.body.content;
+
+	if (content === '') {
+		content = 'Khách hàng đã không để lại bất kỳ lời đánh giá nào.';
+	}
+
+	scheduleModel.addNewFeedback(
+		[userId, scheduleId, rate, content],
+		(err, result) => {
+			if (err) throw err;
+
+			res.status(200).send({ message: 'success' });
+		}
+	);
+}
+function changeFeedback(req, res) {
+	const feedbackId = req.body.feedbackId;
+	const rate = req.body.rate;
+	const content = req.body.content;
+
+	scheduleModel.modifyFeedback([feedbackId, rate, content], (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send({ message: 'success' });
+	});
+}
+
+function getReplyFeedback(req, res) {}
+
+function sendReplyFeedback(req, res) {
+	const feedbackId = req.body.feedbackId;
+	const content = req.body.content;
+
+	scheduleModel.addNewReplyFeedback([feedbackId, content], (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send({ message: 'success' });
+	});
+}
+
+function changeReplyFeedback(req, res) {
+	const feedbackId = req.body.feedbackId;
+	const content = req.body.content;
+
+	scheduleModel.modifyReplyFeedback([feedbackId, content], (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send({ message: 'success' });
+	});
+}
+
 module.exports = {
 	getSchedule,
 	viewSchedule,
@@ -180,4 +244,10 @@ module.exports = {
 	getTicket,
 	cancelTicket,
 	getMySchedule,
+	getFeedback,
+	sendFeedback,
+	changeFeedback,
+	getReplyFeedback,
+	sendReplyFeedback,
+	changeReplyFeedback,
 };

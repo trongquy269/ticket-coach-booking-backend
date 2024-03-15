@@ -8,6 +8,10 @@ function accountRoute(app) {
 	app.post('/login', accountCtrl.login);
 	app.post('/register', accountCtrl.register);
 	app.post('/complete-register', accountCtrl.completeRegister);
+	app.get('/profile', accountCtrl.getProfileUser);
+	app.put('/profile', accountCtrl.modifyProfileUser);
+	app.post('/check-password', accountCtrl.checkPassword);
+	app.post('/change-password', accountCtrl.changePassword);
 }
 
 module.exports = accountRoute;

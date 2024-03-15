@@ -54,62 +54,79 @@ function getToken(req, res) {
 
 function getVerify(req, res) {
 	const username = req.query.username;
+	const userId = req.query.userId;
 
-	accountModel.getEmailByUsername(username, (err, result) => {
-		if (err) throw err;
+	const sendMail = (email) => {
+		const transporter = nodemailer.createTransport({
+			host: 'smtp.gmail.com',
+			port: 465,
+			secure: true,
+			auth: {
+				user: 'nguyentrongquy260902@gmail.com',
+				pass: 'baagtbarvjbibmbj',
+			},
+		});
 
-		if (result.length === 0) {
-			res.status(200).send({ message: 'Username not found' });
-		} else {
-			const email = result[0].email;
+		VERIFY_CODE = Math.floor(Math.random() * 1000000);
 
-			const transporter = nodemailer.createTransport({
-				host: 'smtp.gmail.com',
-				port: 465,
-				secure: true,
-				auth: {
-					user: 'nguyentrongquy260902@gmail.com',
-					pass: 'baagtbarvjbibmbj',
-				},
-			});
+		const mailOptions = {
+			from: '"Coach Booking" <nguyentrongquy260902@gmail.com>',
+			to: email,
+			subject: 'Coach Booking - Verify your email',
+			text: 'Verify your email',
+			html: `<div
+			style="border: 1px solid #ccc; width: 500px; max-width: 90%; padding: 16px; border-radius: 10px; color: #111; margin: 0 auto;">
+			<h3 style="width: 100%; text-align: center;">Coach Booking</h3>
+			<h2 style="width: 100%; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 36px;">Xác minh khôi
+				phục mật khẩu của bạn
+			</h2>
+			<p>Coach Booking đã nhận được yêu cầu của <span style="font-style: bold;">${email}</span> khôi phục lại mật khẩu của bạn.</p>
+			<p>Sử dụng mã này để hoàn tất việc xác minh khôi phục mật khẩu của bạn:</p>
+			<h1 style="width: 100%; text-align: center">${VERIFY_CODE}</h1>
+			<p>Mã này sẽ hết hạn sau 1 phút.</p>
+			<p>Nếu bạn không nhận ra <span style="font-style: bold;">${email}</span>, bạn có thể yên tâm bỏ qua email này.</p>
+		</div>`,
+		};
 
-			VERIFY_CODE = Math.floor(Math.random() * 1000000);
+		transporter.sendMail(mailOptions, (error, info) => {
+			if (error) {
+				console.log(error);
+				res.status(500).send("error: 'Failed to send email");
+			} else {
+				console.log('Message sent:', info.response);
 
-			const mailOptions = {
-				from: '"Coach Booking" <nguyentrongquy260902@gmail.com>',
-				to: email,
-				subject: 'Coach Booking - Verify your email',
-				text: 'Verify your email',
-				html: `<div
-				style="border: 1px solid #ccc; width: 500px; max-width: 90%; padding: 16px; border-radius: 10px; color: #111; margin: 0 auto;">
-				<h3 style="width: 100%; text-align: center;">Coach Booking</h3>
-				<h2 style="width: 100%; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 36px;">Xác minh khôi
-					phục mật khẩu của bạn
-				</h2>
-				<p>Coach Booking đã nhận được yêu cầu của <span style="font-style: bold;">${email}</span> khôi phục lại mật khẩu của bạn.</p>
-				<p>Sử dụng mã này để hoàn tất việc xác minh khôi phục mật khẩu của bạn:</p>
-				<h1 style="width: 100%; text-align: center">${VERIFY_CODE}</h1>
-				<p>Mã này sẽ hết hạn sau 2 phút.</p>
-				<p>Nếu bạn không nhận ra <span style="font-style: bold;">${email}</span>, bạn có thể yên tâm bỏ qua email này.</p>
-			</div>`,
-			};
+				setTimeout(() => {
+					VERIFY_CODE = null;
+				}, 60000);
 
-			transporter.sendMail(mailOptions, (error, info) => {
-				if (error) {
-					console.log(error);
-					res.status(500).send("error: 'Failed to send email");
-				} else {
-					console.log('Message sent:', info.response);
+				res.status(200).send({ message: 'Email sent' });
+			}
+		});
+	};
 
-					setTimeout(() => {
-						VERIFY_CODE = null;
-					}, 120000);
+	if (username) {
+		accountModel.getEmailByUsername(username, (err, result) => {
+			if (err) throw err;
 
-					res.status(200).send({ message: 'Email sent' });
-				}
-			});
-		}
-	});
+			if (result.length === 0) {
+				res.status(200).send({ message: 'Username not found' });
+			} else {
+				const email = result[0].email;
+				sendMail(email);
+			}
+		});
+	} else if (userId) {
+		accountModel.getEmailByUserId(userId, (err, result) => {
+			if (err) throw err;
+
+			if (result.length === 0) {
+				res.status(200).send({ message: 'User not found' });
+			} else {
+				const email = result[0].email;
+				sendMail(email);
+			}
+		});
+	}
 }
 
 function submitVerify(req, res) {
@@ -273,6 +290,176 @@ function completeRegister(req, res) {
 	});
 }
 
+function getProfileUser(req, res) {
+	const userId = req.query.userId;
+
+	accountModel.getProfileUser(userId, (err, result) => {
+		if (err) throw err;
+
+		if (result.length === 0) {
+			res.status(200).send({ message: 'User not found' });
+		} else {
+			res.status(200).send(result[0]);
+		}
+	});
+}
+
+function modifyProfileUser(req, res) {
+	const userId = req.body.userId;
+	const key = req.body.key;
+
+	if (key !== 'address') {
+		const value = req.body.value.trim();
+
+		if (key === 'username') {
+			accountModel.modifyUsername([userId, value], (err, result) => {
+				if (err) throw err;
+
+				res.status(200).send({
+					message: 'success',
+				});
+			});
+		} else if (key === 'phone' || key === 'email') {
+			accountModel.getUsernameByUserId(userId, (err, result) => {
+				if (err) throw err;
+
+				const isNewValueContainAtSign = value.includes('@');
+				const isOldValueContainAtSign =
+					result[0].username.includes('@');
+
+				if (isNewValueContainAtSign === isOldValueContainAtSign) {
+					accountModel.modifyProfileUser(
+						[userId, key, value],
+						(err, result) => {
+							if (err) throw err;
+
+							accountModel.modifyUsername(
+								[userId, value],
+								(err, result) => {
+									if (err) throw err;
+
+									res.status(200).send({
+										message: 'success',
+									});
+								}
+							);
+						}
+					);
+				} else {
+					accountModel.modifyProfileUser(
+						[userId, key, value],
+						(err, result) => {
+							if (err) throw err;
+
+							res.status(200).send({ message: 'success' });
+						}
+					);
+				}
+			});
+		} else {
+			accountModel.modifyProfileUser(
+				[userId, key, value],
+				(err, result) => {
+					if (err) throw err;
+
+					res.status(200).send({ message: 'success' });
+				}
+			);
+		}
+	} else {
+		const city = req.body.city;
+		const districtId = req.body.districtId;
+
+		accountModel.modifyAddress(
+			[userId, city, districtId],
+			(err, result) => {
+				if (err) throw err;
+
+				res.status(200).send({ message: 'success' });
+			}
+		);
+	}
+}
+
+function checkPassword(req, res) {
+	const userId = req.body.userId;
+	const password = req.body.password.trim();
+
+	const passwordHashed = hashPassword(password);
+
+	accountModel.checkPassword([userId, passwordHashed], (err, result) => {
+		if (err) throw err;
+
+		if (result.length === 0) {
+			res.status(200).send({ message: 'False' });
+		} else {
+			res.status(200).send({ message: 'True' });
+		}
+	});
+}
+
+function changePassword(req, res) {
+	const userId = req.body.userId;
+	const password = req.body.password.trim();
+
+	const passwordHashed = hashPassword(password);
+
+	accountModel.changePasswordByUserId(
+		[userId, passwordHashed],
+		(err, result) => {
+			if (err) throw err;
+
+			accountModel.getEmailByUserId(userId, (err, result) => {
+				if (err) throw err;
+
+				if (result.length === 0) {
+					res.status(200).send({ message: 'success' });
+				} else {
+					const email = result[0].email;
+
+					const transporter = nodemailer.createTransport({
+						host: 'smtp.gmail.com',
+						port: 465,
+						secure: true,
+						auth: {
+							user: 'nguyentrongquy260902@gmail.com',
+							pass: 'baagtbarvjbibmbj',
+						},
+					});
+
+					const mailOptions = {
+						from: '"Coach Booking" <nguyentrongquy260902@gmail.com>',
+						to: email,
+						subject: 'Coach Booking - Notice your email',
+						text: 'Notice your email',
+						html: `<div
+						style="border: 1px solid #ccc; width: 500px; max-width: 90%; padding: 16px; border-radius: 10px; color: #111; margin: 0 auto;">
+						<h3 style="width: 100%; text-align: center;">Coach Booking</h3>
+						<h2 style="width: 100%; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 36px;">Xác nhận thay đổi mật khẩu của bạn đã thành công
+						</h2>
+						<p>Coach Booking đã nhận được yêu cầu của <span style="font-style: bold;">${email}</span> thay đổi mật khẩu của bạn.</p>
+						<p>Nếu bạn không nhận ra <span style="font-style: bold;">${email}</span>, bạn hãy bảo mật lại tài khoản của mình.</p>
+					</div>`,
+					};
+
+					transporter.sendMail(mailOptions, (error, info) => {
+						if (error) {
+							console.log(error);
+							res.status(500).send(
+								"error: 'Failed to send email"
+							);
+						} else {
+							console.log('Message sent:', info.response);
+
+							res.status(200).send({ message: 'success' });
+						}
+					});
+				}
+			});
+		}
+	);
+}
+
 module.exports = {
 	getToken,
 	getVerify,
@@ -281,4 +468,8 @@ module.exports = {
 	login,
 	register,
 	completeRegister,
+	getProfileUser,
+	modifyProfileUser,
+	checkPassword,
+	changePassword,
 };

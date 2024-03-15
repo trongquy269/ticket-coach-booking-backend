@@ -161,11 +161,73 @@ function cancelSeat([scheduleID, seat], callback) {
 function getTicketByUserId(userId, callback) {
 	db.query(
 		`
-		SELECT id, schedule_id, seat, payment
+		SELECT Tickets.*, Schedules.date as start_date
 		FROM Tickets
+		JOIN Schedules ON Tickets.schedule_id = Schedules.id
 		WHERE user_id = ?
 		`,
 		userId,
+		callback
+	);
+}
+
+function getFeedback(scheduleId, callback) {
+	db.query(
+		`
+			SELECT f.id, f.content, f.rate, f.time, f.date, f.isModify, f.helpful, f.dislike, u.name, f.user_id, r.id as reply_feedback_id, r.content as reply_feedback_content, r.time as reply_feedback_time, r.date as reply_feedback_date, r.isModify as reply_feedback_isModify, g.name as garage_name, g.user_id as garage_id
+			FROM Feedbacks f
+			JOIN Users u ON f.user_id = u.id
+			LEFT JOIN Reply_Feedbacks r ON r.feedback_id = f.id
+			JOIN Schedules s ON f.schedule_id = s.id
+			JOIN Coaches c ON s.coach_id = c.id
+			JOIN Garages g ON c.garage_id = g.id
+			WHERE f.schedule_id = ?
+		`,
+		scheduleId,
+		callback
+	);
+}
+
+function addNewFeedback([userId, scheduleId, rate, content], callback) {
+	db.query(
+		`
+			CALL AddNewFeedback(?, ?, ?, ?)
+		`,
+		[userId, scheduleId, rate, content],
+		callback
+	);
+}
+
+function modifyFeedback([feedbackId, rate, content], callback) {
+	db.query(
+		`
+			UPDATE Feedbacks
+			SET rate = ?, content = ?, isModify = 1
+			WHERE id = ?
+		`,
+		[rate, content, feedbackId],
+		callback
+	);
+}
+
+function addNewReplyFeedback([feedbackId, content], callback) {
+	db.query(
+		`
+			CALL AddNewReplyFeedback(?, ?)
+		`,
+		[feedbackId, content],
+		callback
+	);
+}
+
+function modifyReplyFeedback([feedbackId, content], callback) {
+	db.query(
+		`
+            UPDATE Reply_Feedbacks
+            SET content = ?, isModify = 1
+            WHERE id = ?
+        `,
+		[content, feedbackId],
 		callback
 	);
 }
@@ -181,4 +243,9 @@ module.exports = {
 	cancelSeat,
 	getTicketByUserId,
 	increasePoint,
+	getFeedback,
+	addNewFeedback,
+	modifyFeedback,
+	addNewReplyFeedback,
+	modifyReplyFeedback,
 };
