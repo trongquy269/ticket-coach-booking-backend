@@ -97,9 +97,67 @@ function bookSchedule(req, res) {
 	const scheduleId = req.body.scheduleId;
 	const seats = req.body.seats;
 	const payment = req.body.payment;
+	const price = req.body.price;
+	const isPaid = req.body.isPaid || 0;
+	const discount = req.body.discount || 0;
+	const roundTrip = req.body.roundTrip || 0;
 
 	scheduleModel.addTicket(
-		[userId, scheduleId, seats.join(','), payment],
+		[
+			userId,
+			scheduleId,
+			seats.join(','),
+			payment,
+			price,
+			isPaid,
+			discount,
+			roundTrip,
+		],
+		(err, result) => {
+			if (err) throw err;
+
+			scheduleModel.increasePoint(userId, (err, _result) => {
+				if (err) throw err;
+			});
+		}
+	);
+
+	seats.forEach((seat) => {
+		scheduleModel.bookSeat([scheduleId, seat], (err, result) => {
+			if (err) throw err;
+		});
+	});
+
+	res.status(200).send({ message: 'Ticket booked' });
+}
+
+function bookScheduleWithShuttleBus(req, res) {
+	const userId = req.body.userId;
+	const scheduleId = req.body.scheduleId;
+	const seats = req.body.seats;
+	const payment = req.body.payment;
+	const price = req.body.price;
+	const isPaid = req.body.isPaid || 0;
+	const discount = req.body.discount || 0;
+	const roundTrip = req.body.roundTrip || 0;
+	const shuttleBusName = req.body.shuttleBusName;
+	const shuttleBusPhone = req.body.shuttleBusPhone;
+	const shuttleBusAddress = req.body.shuttleBusAddress;
+
+	scheduleModel.addTicketWithShuttleBus(
+		[
+			userId,
+			scheduleId,
+			seats.join(','),
+			payment,
+			price,
+			isPaid,
+			discount,
+			roundTrip,
+			shuttleBusName,
+			shuttleBusPhone,
+			shuttleBusAddress,
+		],
 		(err, result) => {
 			if (err) throw err;
 
@@ -237,6 +295,123 @@ function changeReplyFeedback(req, res) {
 	});
 }
 
+function getShuttleBus(req, res) {
+	const userId = req.query.userId;
+	const scheduleId = req.query.scheduleId;
+
+	scheduleModel.getShuttleBus([userId, scheduleId], (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+
+function addShuttleBus(req, res) {
+	const ticketId = req.body.ticketId;
+	const name = req.body.name;
+	const phoneNumber = req.body.phoneNumber;
+	const address = req.body.address;
+
+	scheduleModel.addNewShuttleBus(
+		[ticketId, name, phoneNumber, address],
+		(error, result) => {
+			if (error) throw error;
+
+			res.status(200).send({ message: 'success' });
+		}
+	);
+}
+
+function editShuttleBus(req, res) {
+	const ticketId = req.body.ticketId;
+	const name = req.body.name;
+	const phoneNumber = req.body.phoneNumber;
+	const address = req.body.address;
+
+	scheduleModel.editShuttleBus(
+		[ticketId, name, phoneNumber, address],
+		(error, result) => {
+			if (error) throw error;
+
+			res.status(200).send({ message: 'success' });
+		}
+	);
+}
+
+function deleteShuttleBus(req, res) {
+	const id = req.query.id;
+
+	scheduleModel.deleteShuttleBus(id, (error, result) => {
+		if (error) throw error;
+
+		res.status(200).send({ message: 'success' });
+	});
+}
+
+function getSimpleGarage(req, res) {
+	scheduleModel.getSimpleGarage((err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+
+function getSeat(req, res) {
+	const scheduleId = req.query.scheduleId;
+
+	scheduleModel.getSeatByScheduleID(scheduleId, (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+
+function bookScheduleWithoutAccount(req, res) {
+	const name = req.body.name;
+	const phone = req.body.phone;
+	const userId = req.body.userId;
+	const scheduleId = req.body.scheduleId;
+	const seats = req.body.seats;
+	const payment = req.body.payment;
+	const price = req.body.price;
+	const isPaid = req.body.isPaid || 0;
+	const discount = req.body.discount || 0;
+
+	scheduleModel.addTicketWithoutAccount(
+		[
+			name,
+			phone,
+			seats.join(','),
+			payment,
+			scheduleId,
+			isPaid,
+			discount,
+			price,
+		],
+		(err, result) => {
+			if (err) throw err;
+		}
+	);
+
+	seats.forEach((seat) => {
+		scheduleModel.bookSeat([scheduleId, seat], (err, result) => {
+			if (err) throw err;
+		});
+	});
+
+	res.status(200).send({ message: 'Ticket booked' });
+}
+
+function paymentSchedule(req, res) {
+	const ticketId = req.body.ticketId;
+
+	scheduleModel.paymentSchedule(ticketId, (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send({ message: 'success' });
+	});
+}
+
 module.exports = {
 	getSchedule,
 	viewSchedule,
@@ -250,4 +425,13 @@ module.exports = {
 	getReplyFeedback,
 	sendReplyFeedback,
 	changeReplyFeedback,
+	getShuttleBus,
+	addShuttleBus,
+	editShuttleBus,
+	deleteShuttleBus,
+	getSimpleGarage,
+	getSeat,
+	bookScheduleWithoutAccount,
+	paymentSchedule,
+	bookScheduleWithShuttleBus,
 };

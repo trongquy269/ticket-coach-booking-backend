@@ -45,9 +45,25 @@ function getEndPoint(callback) {
 	);
 }
 
+function getEndPointByStartPoint(startPointId, callback) {
+	db.query(
+		`
+			SELECT End_point.id, Cities.name
+			FROM Routes
+			JOIN Start_point ON Start_point.id = start_id
+			JOIN End_point ON End_point.id = end_id
+			JOIN Cities ON Cities.id = End_point.city_id
+			WHERE Routes.start_id = ?
+		`,
+		startPointId,
+		callback
+	);
+}
+
 module.exports = {
 	getAllCities,
 	getDistrict,
 	getStartPoint,
 	getEndPoint,
+	getEndPointByStartPoint,
 };

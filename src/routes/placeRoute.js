@@ -5,6 +5,7 @@ function placeRoute(app) {
 	app.get('/district', placeCtrl.getDistrict);
 	app.get('/start-point', placeCtrl.getStartPoint);
 	app.get('/end-point', placeCtrl.getEndPoint);
+	app.get('/end-by-start', placeCtrl.getEndPointByStartPoint);
 }
 
 module.exports = placeRoute;

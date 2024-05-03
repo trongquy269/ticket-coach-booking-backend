@@ -260,6 +260,60 @@ function getAllSchedule(req, res) {
 	});
 }
 
+function getSearchSuggestions(req, res) {
+	const searchData = req.query.searchData;
+	const typeSearch = req.query.typeSearch;
+
+	if (typeSearch === 'customer') {
+		managerModel.searchSuggestionUsers(searchData, (error, result) => {
+			if (error) throw error;
+
+			res.status(200).send(result);
+		});
+	} else if (typeSearch === 'schedule') {
+	} else if (typeSearch === 'ticket') {
+		managerModel.searchSuggestionTickets(searchData, (error, result) => {
+			if (error) throw error;
+
+			res.status(200).send(result);
+		});
+	} else if (typeSearch === 'coach') {
+	} else if (typeSearch === 'garage') {
+	}
+}
+
+function getSearch(req, res) {
+	const searchData = req.query.searchData;
+	const typeSearch = req.query.typeSearch;
+
+	if (typeSearch === 'customer') {
+		managerModel.searchUsers(searchData, (error, result) => {
+			if (error) throw error;
+
+			res.status(200).send(result);
+		});
+	} else if (typeSearch === 'schedule') {
+	} else if (typeSearch === 'ticket') {
+		managerModel.searchTickets(+searchData, (error, result) => {
+			if (error) throw error;
+
+			res.status(200).send(result);
+		});
+	} else if (typeSearch === 'coach') {
+	} else if (typeSearch === 'garage') {
+	}
+}
+
+function getTicketById(req, res) {
+	const ticketId = req.query.ticketId;
+
+	managerModel.getTicketById(ticketId, (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+
 module.exports = {
 	getAllGarage,
 	addNewGarage,
@@ -274,4 +328,7 @@ module.exports = {
 	editUser,
 	removeUser,
 	getAllSchedule,
+	getSearchSuggestions,
+	getSearch,
+	getTicketById,
 };

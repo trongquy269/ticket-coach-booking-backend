@@ -13,6 +13,18 @@ function scheduleRoute(app) {
 	app.get('/reply-feedback', scheduleCtrl.getReplyFeedback);
 	app.post('/reply-feedback', scheduleCtrl.sendReplyFeedback);
 	app.put('/reply-feedback', scheduleCtrl.changeReplyFeedback);
+	app.get('/shuttle-bus', scheduleCtrl.getShuttleBus);
+	app.post('/shuttle-bus', scheduleCtrl.addShuttleBus);
+	app.put('/shuttle-bus', scheduleCtrl.editShuttleBus);
+	app.delete('/shuttle-bus', scheduleCtrl.deleteShuttleBus);
+	app.get('/garage', scheduleCtrl.getSimpleGarage);
+	app.get('/seat', scheduleCtrl.getSeat);
+	app.post('/guest-booking', scheduleCtrl.bookScheduleWithoutAccount);
+	app.post('/payment-confirm', scheduleCtrl.paymentSchedule);
+	app.post(
+		'/booking-with-shuttle-bus',
+		scheduleCtrl.bookScheduleWithShuttleBus
+	);
 }
 
 module.exports = scheduleRoute;

@@ -41,9 +41,20 @@ function getEndPoint(req, res) {
 	});
 }
 
+function getEndPointByStartPoint(req, res) {
+	const startPointId = req.query.start_id;
+
+	placeModel.getEndPointByStartPoint(startPointId, (err, result) => {
+		if (err) throw err;
+
+		res.status(200).send(result);
+	});
+}
+
 module.exports = {
 	getPlaces,
 	getDistrict,
 	getStartPoint,
 	getEndPoint,
+	getEndPointByStartPoint,
 };

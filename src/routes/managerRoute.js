@@ -20,6 +20,11 @@ function managerRoute(app) {
 	// app.post('/manager-user', managerCtrl.addNewUser);
 	// app.patch('/manager-user', managerCtrl.editUser);
 	// app.delete('/manager-user', managerCtrl.removeUser);
+
+	app.get('/manager-ticket', managerCtrl.getTicketById);
+
+	app.get('/typing-search', managerCtrl.getSearchSuggestions);
+	app.get('/search', managerCtrl.getSearch);
 }
 
 module.exports = managerRoute;
