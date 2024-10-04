@@ -460,6 +460,28 @@ function changePassword(req, res) {
 	);
 }
 
+function getUserWithPhone(req, res) {
+	const phone = req.query.phone;
+
+	accountModel.getUserWithPhone(phone, (err, result) => {
+		if (err) throw err;
+
+		if (result.length === 0) {
+			res.status(200).send({ token: '' });
+		} else {
+			const token = createToken({
+				id: result[0].id,
+				name: result[0].name,
+				email: result[0].email,
+				role: result[0].role || 'customer',
+			});
+
+			res.status(200).send({ token });
+			return;
+		}
+	});
+}
+
 module.exports = {
 	getToken,
 	getVerify,
@@ -472,4 +494,5 @@ module.exports = {
 	modifyProfileUser,
 	checkPassword,
 	changePassword,
+	getUserWithPhone,
 };

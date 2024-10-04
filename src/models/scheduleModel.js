@@ -227,7 +227,7 @@ function getTicketByUserId(userId, callback) {
 		SELECT Tickets.*, Schedules.date as start_date
 		FROM Tickets
 		JOIN Schedules ON Tickets.schedule_id = Schedules.id
-		WHERE user_id = ?
+		WHERE Tickets.user_id = ?
 		`,
 		userId,
 		callback
@@ -296,15 +296,15 @@ function modifyReplyFeedback([feedbackId, content], callback) {
 }
 
 function getShuttleBus([userId, scheduleId], callback) {
-	db.query(
-		`
-			SELECT id, name, phone_number, address
-			FROM Shuttle_Bus
-			WHERE user_id = ? AND schedule_id = ?
-		`,
-		[userId, scheduleId],
-		callback
-	);
+	// db.query(
+	// 	`
+	// 		SELECT id, name, phone_number, address
+	// 		FROM Shuttle_Bus
+	// 		WHERE user_id = ? AND schedule_id = ?
+	// 	`,
+	// 	[userId, scheduleId],
+	// 	callback
+	// );
 }
 
 function addNewShuttleBus([ticketId, name, phoneNumber, address], callback) {
@@ -364,14 +364,34 @@ function getSeatByScheduleID(scheduleId, callback) {
 }
 
 function addTicketWithoutAccount(
-	[name, phone, seats, payment, scheduleId, isPaid, discount, price],
+	[
+		name,
+		phone,
+		seats,
+		payment,
+		scheduleId,
+		isPaid,
+		discount,
+		price,
+		roundTrip,
+	],
 	callback
 ) {
 	db.query(
 		`
-			CALL BookTicketWithoutAccount(?, ?, ?, ?, ?, ?, current_time(), current_date(), ?, ?)
+			CALL BookTicketWithoutAccount(?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`,
-		[name, phone, seats, payment, scheduleId, isPaid, discount, price],
+		[
+			name,
+			phone,
+			seats,
+			payment,
+			scheduleId,
+			isPaid,
+			discount,
+			price,
+			roundTrip,
+		],
 		callback
 	);
 }
@@ -384,6 +404,21 @@ function paymentSchedule(ticketId, callback) {
 			WHERE id = ?
 		`,
 		ticketId,
+		callback
+	);
+}
+
+function getAllSchedule(callback) {
+	db.query(
+		`
+			SELECT DISTINCT cs.name AS start_city, ce.name AS end_city, r.distance, r.duration, sp.id AS start_city_id, ep.id AS end_city_id
+			FROM Schedules s
+			JOIN Routes r ON r.id = s.route_id
+			JOIN Start_point sp ON sp.id = r.start_id
+			JOIN End_point ep ON ep.id = r.end_id
+			JOIN Cities cs ON cs.id = sp.city_id
+			JOIN Cities ce ON ce.id = ep.city_id
+		`,
 		callback
 	);
 }
@@ -413,4 +448,5 @@ module.exports = {
 	paymentSchedule,
 	addTicketWithShuttleBus,
 	editShuttleBus,
+	getAllSchedule,
 };

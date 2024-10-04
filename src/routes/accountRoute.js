@@ -12,6 +12,7 @@ function accountRoute(app) {
 	app.put('/profile', accountCtrl.modifyProfileUser);
 	app.post('/check-password', accountCtrl.checkPassword);
 	app.post('/change-password', accountCtrl.changePassword);
+	app.get('/login-with-phone', accountCtrl.getUserWithPhone);
 }
 
 module.exports = accountRoute;

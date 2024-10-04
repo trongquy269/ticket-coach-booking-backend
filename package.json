@@ -23,7 +23,8 @@
 		"express": "^4.18.2",
 		"jsonwebtoken": "^9.0.2",
 		"mysql2": "^3.6.0",
-		"nodemailer": "^6.9.4"
+		"nodemailer": "^6.9.4",
+		"undici": "^6.19.8"
 	},
 	"devDependencies": {
 		"nodemon": "^3.0.1"

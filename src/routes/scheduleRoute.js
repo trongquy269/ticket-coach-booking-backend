@@ -25,6 +25,7 @@ function scheduleRoute(app) {
 		'/booking-with-shuttle-bus',
 		scheduleCtrl.bookScheduleWithShuttleBus
 	);
+	app.get('/search/schedule', scheduleCtrl.getAllSchedule);
 }
 
 module.exports = scheduleRoute;

@@ -376,6 +376,7 @@ function bookScheduleWithoutAccount(req, res) {
 	const price = req.body.price;
 	const isPaid = req.body.isPaid || 0;
 	const discount = req.body.discount || 0;
+	const roundTrip = req.body.roundTrip || 0;
 
 	scheduleModel.addTicketWithoutAccount(
 		[
@@ -387,6 +388,7 @@ function bookScheduleWithoutAccount(req, res) {
 			isPaid,
 			discount,
 			price,
+			roundTrip,
 		],
 		(err, result) => {
 			if (err) throw err;
@@ -412,6 +414,38 @@ function paymentSchedule(req, res) {
 	});
 }
 
+function getAllSchedule(req, res) {
+	const groupData = (arr) => {
+		const groupedData = [];
+		let child = [];
+
+		for (let i = 0; i < arr.length; i++) {
+			if (child.length === 0) {
+				child.push(arr[i]);
+			} else {
+				if (arr[i].start_city === child[child.length - 1].start_city) {
+					child.push(arr[i]);
+				} else {
+					groupedData.push(child);
+					child = [arr[i]];
+				}
+			}
+		}
+
+		if (child.length > 0) {
+			groupedData.push(child);
+		}
+
+		return groupedData;
+	};
+
+	scheduleModel.getAllSchedule((err, result) => {
+		if (err) throw err;
+
+		res.status(200).json(groupData(result));
+	});
+}
+
 module.exports = {
 	getSchedule,
 	viewSchedule,
@@ -434,4 +468,5 @@ module.exports = {
 	bookScheduleWithoutAccount,
 	paymentSchedule,
 	bookScheduleWithShuttleBus,
+	getAllSchedule,
 };

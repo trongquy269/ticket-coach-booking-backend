@@ -248,6 +248,19 @@ function getEmailByUserId(userId, callback) {
 	);
 }
 
+function getUserWithPhone(phone, callback) {
+	db.query(
+		`
+		SELECT Users.id as id, Users.name as name, Users.email as email, Accounts.role as role
+		FROM Users
+		LEFT JOIN Accounts ON Accounts.user_id = Users.id
+		WHERE phone = ?
+	`,
+		phone,
+		callback
+	);
+}
+
 module.exports = {
 	getPhone,
 	getUserByEmail,
@@ -267,4 +280,5 @@ module.exports = {
 	checkPassword,
 	changePasswordByUserId,
 	getEmailByUserId,
+	getUserWithPhone,
 };
