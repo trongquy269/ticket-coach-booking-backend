@@ -89,18 +89,31 @@ function getSeatByScheduleID(scheduleID, callback) {
 }
 
 function addTicket(
-	[userId, scheduleId, seats, payment, price, isPaid, discount, roundTrip],
+	[
+		userId,
+		scheduleId,
+		scheduleBackId,
+		seats,
+		back_seats,
+		payment,
+		price,
+		isPaid,
+		discount,
+		roundTrip,
+	],
 	callback
 ) {
 	db.query(
 		`
-		INSERT INTO Tickets (user_id, schedule_id, seat, payment, isPaid, time, date, discount, price, round_trip)
-		VALUES (?, ?, ?, ?, ?, current_time(), current_date(), ?, ?, ?)
+		INSERT INTO Tickets (user_id, schedule_id, schedule_back_id, seat, back_seat, payment, isPaid, time, date, discount, price, round_trip)
+		VALUES (?, ?, ?, ?, ?, ?, ?, current_time(), current_date(), ?, ?, ?)
 		`,
 		[
 			userId,
 			scheduleId,
+			scheduleBackId,
 			seats,
+			back_seats,
 			payment,
 			isPaid,
 			discount,
@@ -116,13 +129,24 @@ function addTicket(
 		`,
 		[userId, scheduleId, price]
 	);
+
+	if (scheduleBackId) {
+		db.query(
+			`
+			CALL AddNewNotifyForSchedule(?, ?, ${isPaid}, ?)
+		`,
+			[userId, scheduleBackId, price]
+		);
+	}
 }
 
 function addTicketWithShuttleBus(
 	[
 		userId,
 		scheduleId,
+		scheduleBackId,
 		seats,
+		back_seats,
 		payment,
 		price,
 		isPaid,
@@ -131,17 +155,22 @@ function addTicketWithShuttleBus(
 		shuttleBusName,
 		shuttleBusPhone,
 		shuttleBusAddress,
+		backShuttleBusName,
+		backShuttleBusPhone,
+		backShuttleBusAddress,
 	],
 	callback
 ) {
 	db.query(
 		`
-			CALL BookTicketWithShuttleBus(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			CALL BookTicketWithShuttleBus(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`,
 		[
 			userId,
 			scheduleId,
+			scheduleBackId,
 			seats,
+			back_seats,
 			payment,
 			isPaid,
 			discount,
@@ -150,6 +179,9 @@ function addTicketWithShuttleBus(
 			shuttleBusName,
 			shuttleBusPhone,
 			shuttleBusAddress,
+			backShuttleBusName,
+			backShuttleBusPhone,
+			backShuttleBusAddress,
 		],
 		callback
 	);
@@ -160,6 +192,15 @@ function addTicketWithShuttleBus(
 		`,
 		[userId, scheduleId, price]
 	);
+
+	if (scheduleBackId) {
+		db.query(
+			`
+			CALL AddNewNotifyForSchedule(?, ?, ${isPaid}, ?)
+		`,
+			[userId, scheduleBackId, price]
+		);
+	}
 }
 
 function increasePoint(userId, callback) {
@@ -194,6 +235,18 @@ function getTicket([userId, scheduleId], callback) {
 		WHERE user_id = ? AND schedule_id = ?
 		`,
 		[userId, scheduleId],
+		callback
+	);
+}
+
+function getScheduleIdByTicketId(ticketId, callback) {
+	db.query(
+		`
+			SELECT schedule_id, schedule_back_id
+			FROM Tickets
+			WHERE id = ?
+		`,
+		ticketId,
 		callback
 	);
 }
@@ -295,37 +348,75 @@ function modifyReplyFeedback([feedbackId, content], callback) {
 	);
 }
 
-function getShuttleBus([userId, scheduleId], callback) {
-	// db.query(
-	// 	`
-	// 		SELECT id, name, phone_number, address
-	// 		FROM Shuttle_Bus
-	// 		WHERE user_id = ? AND schedule_id = ?
-	// 	`,
-	// 	[userId, scheduleId],
-	// 	callback
-	// );
-}
-
-function addNewShuttleBus([ticketId, name, phoneNumber, address], callback) {
+function getShuttleBus([ticketId], callback) {
 	db.query(
 		`
-			INSERT INTO Shuttle_Bus (ticket_id, name, phone_number, address)
-			VALUES (?, ?, ?, ?)
+			SELECT name, phone_number, address, back_name, back_phone_number, back_address
+			FROM Shuttle_Bus
+			WHERE ticket_id = ?
 		`,
-		[ticketId, name, phoneNumber, address],
+		[ticketId],
 		callback
 	);
 }
 
-function editShuttleBus([ticketId, name, phoneNumber, address], callback) {
+function addNewShuttleBus(
+	[
+		ticketId,
+		name,
+		phoneNumber,
+		address,
+		back_name,
+		back_phoneNumber,
+		back_address,
+	],
+	callback
+) {
+	db.query(
+		`
+			INSERT INTO Shuttle_Bus (ticket_id, name, phone_number, address, back_name, back_phone_number, back_address)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+		`,
+		[
+			ticketId,
+			name,
+			phoneNumber,
+			address,
+			back_name,
+			back_phoneNumber,
+			back_address,
+		],
+		callback
+	);
+}
+
+function editShuttleBus(
+	[
+		ticketId,
+		name,
+		phoneNumber,
+		address,
+		back_name,
+		back_phoneNumber,
+		back_address,
+	],
+	callback
+) {
 	db.query(
 		`
 			UPDATE Shuttle_Bus
-			SET name = ?, phone_number = ?, address = ?
+			SET name = ?, phone_number = ?, address = ?, back_name = ?, back_phone_number = ?, back_address = ?
 			WHERE ticket_id = ?
 		`,
-		[name, phoneNumber, address, ticketId],
+		[
+			name,
+			phoneNumber,
+			address,
+			back_name,
+			back_phoneNumber,
+			back_address,
+			ticketId,
+		],
 		callback
 	);
 }
@@ -423,6 +514,42 @@ function getAllSchedule(callback) {
 	);
 }
 
+function isBooked([userId, scheduleId], callback) {
+	db.query(
+		`
+			SELECT id, seat, back_seat, price
+			FROM Tickets
+			WHERE user_id = ? AND schedule_id = ?
+		`,
+		[userId, scheduleId],
+		callback
+	);
+}
+
+function editSeat([scheduleId, number, state], callback) {
+	db.query(
+		`
+			UPDATE Seats
+			SET state = ?
+			WHERE schedule_id = ? AND number = ?
+		`,
+		[state, scheduleId, number],
+		callback
+	);
+}
+
+function changeSeatIntoTicket([ticketId, goSeat, backSeat], callback) {
+	db.query(
+		`
+			UPDATE Tickets
+			SET seat = ?, back_seat = ?
+			WHERE id = ?
+		`,
+		[goSeat, backSeat, ticketId],
+		callback
+	);
+}
+
 module.exports = {
 	getSchedule,
 	getScheduleByID,
@@ -449,4 +576,8 @@ module.exports = {
 	addTicketWithShuttleBus,
 	editShuttleBus,
 	getAllSchedule,
+	isBooked,
+	getScheduleIdByTicketId,
+	editSeat,
+	changeSeatIntoTicket,
 };

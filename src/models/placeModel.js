@@ -1,16 +1,16 @@
 const db = require('../config/database.js');
 
-function getAllCities(callback) {
+function getAllCities (callback) {
 	db.query(
 		`
 		SELECT *
 		FROM Cities
 		`,
-		callback
+		callback,
 	);
 }
 
-function getDistrict(city, callback) {
+function getDistrict (city, callback) {
 	db.query(
 		`
 		SELECT Districts.name, Districts.id
@@ -19,33 +19,33 @@ function getDistrict(city, callback) {
 		WHERE Cities.name = ?
 		`,
 		city,
-		callback
+		callback,
 	);
 }
 
-function getStartPoint(callback) {
+function getStartPoint (callback) {
 	db.query(
 		`
 		SELECT Start_point.id, Cities.name
 		FROM Start_point, Cities
 		WHERE Start_point.city_id = Cities.id
 		`,
-		callback
+		callback,
 	);
 }
 
-function getEndPoint(callback) {
+function getEndPoint (callback) {
 	db.query(
 		`
 		SELECT End_point.id, Cities.name
 		FROM End_point, Cities
 		WHERE End_point.city_id = Cities.id
 		`,
-		callback
+		callback,
 	);
 }
 
-function getEndPointByStartPoint(startPointId, callback) {
+function getEndPointByStartPoint (startPointId, callback) {
 	db.query(
 		`
 			SELECT End_point.id, Cities.name
@@ -56,7 +56,21 @@ function getEndPointByStartPoint(startPointId, callback) {
 			WHERE Routes.start_id = ?
 		`,
 		startPointId,
-		callback
+		callback,
+	);
+}
+
+function getAllRoutes (callback) {
+	db.query(
+		`
+			SELECT r.id, cs.name AS start_place, ce.name AS end_place
+			FROM Routes AS r
+			JOIN Start_point AS sp ON sp.id = r.start_id
+			JOIN End_point AS ep ON ep.id = r.end_id
+			JOIN Cities AS cs ON cs.id = sp.city_id
+			JOIN Cities AS ce ON ce.id = ep.city_id
+		`,
+		callback,
 	);
 }
 
@@ -66,4 +80,5 @@ module.exports = {
 	getStartPoint,
 	getEndPoint,
 	getEndPointByStartPoint,
+	getAllRoutes,
 };

@@ -19,6 +19,7 @@ function scheduleRoute(app) {
 	app.delete('/shuttle-bus', scheduleCtrl.deleteShuttleBus);
 	app.get('/garage', scheduleCtrl.getSimpleGarage);
 	app.get('/seat', scheduleCtrl.getSeat);
+	app.put('/seat', scheduleCtrl.changeSeat);
 	app.post('/guest-booking', scheduleCtrl.bookScheduleWithoutAccount);
 	app.post('/payment-confirm', scheduleCtrl.paymentSchedule);
 	app.post(
@@ -26,6 +27,7 @@ function scheduleRoute(app) {
 		scheduleCtrl.bookScheduleWithShuttleBus
 	);
 	app.get('/search/schedule', scheduleCtrl.getAllSchedule);
+	app.post('/check/is-booked', scheduleCtrl.isBooked);
 }
 
 module.exports = scheduleRoute;

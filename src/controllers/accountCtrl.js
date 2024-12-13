@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const accountModel = require('../models/accountModel');
+const sha512 = require('crypto-js/sha512');
 
 let VERIFY_CODE = null;
 
 const hashPassword = (password) => {
-	return jwt.sign(password, 'secret', { algorithm: 'HS256' });
+	return sha512(password).toString();
 };
 
 const createToken = (content) => {
@@ -30,7 +31,7 @@ const formatDateDMY = (date) => {
 	return day + ' / ' + month + ' / ' + year;
 };
 
-function getToken(req, res) {
+function getToken (req, res) {
 	const email = req.query.email;
 
 	accountModel.getUserByEmail(email, (err, result) => {
@@ -44,6 +45,7 @@ function getToken(req, res) {
 				name: result[0].name,
 				email: result[0].email,
 				role: result[0].role,
+				phone: result[0].phone,
 			});
 
 			res.status(200).send({ token });
@@ -52,7 +54,7 @@ function getToken(req, res) {
 	});
 }
 
-function getVerify(req, res) {
+function getVerify (req, res) {
 	const username = req.query.username;
 	const userId = req.query.userId;
 
@@ -129,7 +131,7 @@ function getVerify(req, res) {
 	}
 }
 
-function submitVerify(req, res) {
+function submitVerify (req, res) {
 	const verifyCode = +req.body.verifyCode;
 
 	if (verifyCode === VERIFY_CODE) {
@@ -139,7 +141,7 @@ function submitVerify(req, res) {
 	}
 }
 
-function resetPassword(req, res) {
+function resetPassword (req, res) {
 	const username = req.body.username;
 	const password = req.body.password;
 
@@ -153,7 +155,7 @@ function resetPassword(req, res) {
 	});
 }
 
-function login(req, res) {
+function login (req, res) {
 	const username = req.body.username;
 	const password = req.body.password;
 
@@ -171,6 +173,7 @@ function login(req, res) {
 				name: result[0].name,
 				email: result[0].email,
 				role: result[0].role,
+				phone: result[0].phone,
 			});
 
 			res.status(200).send({ token });
@@ -179,7 +182,7 @@ function login(req, res) {
 	});
 }
 
-function register(req, res) {
+function register (req, res) {
 	const username = req.body.username;
 	const password = req.body.password;
 
@@ -208,14 +211,14 @@ function register(req, res) {
 						if (err) throw err;
 
 						res.status(200).send({ message: 'Registered' });
-					}
+					},
 				);
 			}
 		});
 	});
 }
 
-function completeRegister(req, res) {
+function completeRegister (req, res) {
 	const name = req.body.name;
 	const dateOfBirth = req.body.dateOfBirth;
 	const gender = req.body.gender;
@@ -275,14 +278,15 @@ function completeRegister(req, res) {
 											name: result[0].name,
 											email: result[0].email,
 											role: result[0].role,
+											phone: result[0].phone,
 										});
 
 										res.status(200).send({ token });
 										return;
 									}
-								}
+								},
 							);
-						}
+						},
 					);
 				});
 			}
@@ -290,7 +294,7 @@ function completeRegister(req, res) {
 	});
 }
 
-function getProfileUser(req, res) {
+function getProfileUser (req, res) {
 	const userId = req.query.userId;
 
 	accountModel.getProfileUser(userId, (err, result) => {
@@ -304,7 +308,7 @@ function getProfileUser(req, res) {
 	});
 }
 
-function modifyProfileUser(req, res) {
+function modifyProfileUser (req, res) {
 	const userId = req.body.userId;
 	const key = req.body.key;
 
@@ -341,9 +345,9 @@ function modifyProfileUser(req, res) {
 									res.status(200).send({
 										message: 'success',
 									});
-								}
+								},
 							);
-						}
+						},
 					);
 				} else {
 					accountModel.modifyProfileUser(
@@ -352,7 +356,7 @@ function modifyProfileUser(req, res) {
 							if (err) throw err;
 
 							res.status(200).send({ message: 'success' });
-						}
+						},
 					);
 				}
 			});
@@ -363,7 +367,7 @@ function modifyProfileUser(req, res) {
 					if (err) throw err;
 
 					res.status(200).send({ message: 'success' });
-				}
+				},
 			);
 		}
 	} else {
@@ -376,12 +380,12 @@ function modifyProfileUser(req, res) {
 				if (err) throw err;
 
 				res.status(200).send({ message: 'success' });
-			}
+			},
 		);
 	}
 }
 
-function checkPassword(req, res) {
+function checkPassword (req, res) {
 	const userId = req.body.userId;
 	const password = req.body.password.trim();
 
@@ -398,7 +402,7 @@ function checkPassword(req, res) {
 	});
 }
 
-function changePassword(req, res) {
+function changePassword (req, res) {
 	const userId = req.body.userId;
 	const password = req.body.password.trim();
 
@@ -446,7 +450,7 @@ function changePassword(req, res) {
 						if (error) {
 							console.log(error);
 							res.status(500).send(
-								"error: 'Failed to send email"
+								"error: 'Failed to send email",
 							);
 						} else {
 							console.log('Message sent:', info.response);
@@ -456,11 +460,11 @@ function changePassword(req, res) {
 					});
 				}
 			});
-		}
+		},
 	);
 }
 
-function getUserWithPhone(req, res) {
+function getUserWithPhone (req, res) {
 	const phone = req.query.phone;
 
 	accountModel.getUserWithPhone(phone, (err, result) => {
@@ -474,6 +478,7 @@ function getUserWithPhone(req, res) {
 				name: result[0].name,
 				email: result[0].email,
 				role: result[0].role || 'customer',
+				phone: result[0].phone,
 			});
 
 			res.status(200).send({ token });
